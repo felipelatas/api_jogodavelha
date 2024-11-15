@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class SessaoJogoController {
 
     private ResponseEntity<String> erroCod(String cod) {

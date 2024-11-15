@@ -113,7 +113,7 @@ public final class SessoesJogoService {
         sb.append(sessao.getVezDeQuem());
         sb.append("\", ");
 
-        sb.append("\"ganhador\": ");
+        sb.append("\"vencedor\": ");
         SessaoJogo.SIMBOLO ganhador = sessao.getGanhador();
         if (ganhador != null) {
             if (ganhador.equals(SessaoJogo.SIMBOLO.NULO)) {

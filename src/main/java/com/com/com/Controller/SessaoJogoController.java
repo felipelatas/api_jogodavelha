@@ -5,7 +5,6 @@ import com.com.com.Service.SessoesJogoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.com.com.Service.SessoesJogoService;
 
 import java.util.Map;
 
@@ -22,8 +21,7 @@ public class SessaoJogoController {
     public ResponseEntity<String> consultar(@PathVariable String cod) {
         if (cod.length() != SessoesJogoService.tamanhoCod)
             return erroCod(cod);
-        return new ResponseEntity<>(SessoesJogoService.obterJsonEstadoJogo(cod),
-                HttpStatus.OK);
+        return SessoesJogoService.obterJsonEstadoJogo(cod);
     }
 
 
@@ -47,7 +45,7 @@ public class SessaoJogoController {
                 || coisas.get("nome").toString().isEmpty())
             return SessoesJogoService.erro( "você precisa informar o nome para colocar no player \"circulo\"!!!!");
 
-        return new ResponseEntity<>(SessoesJogoService.setarNomeBolinha(cod, coisas.get("nome").toString()), HttpStatus.OK);
+        return SessoesJogoService.setarNomeBolinha(cod, coisas.get("nome").toString());
     }
 
     @GetMapping("/obter_nome/{cod}")
@@ -68,7 +66,7 @@ public class SessaoJogoController {
             default:
                 return SessoesJogoService.erro("Esse símbolo nem existe! tem que ser \"O\" ou \"X\"");
         }
-        return new ResponseEntity<>(SessoesJogoService.obterNome(cod, simboloManeiro), HttpStatus.OK);
+        return SessoesJogoService.obterNome(cod, simboloManeiro);
     }
 
 

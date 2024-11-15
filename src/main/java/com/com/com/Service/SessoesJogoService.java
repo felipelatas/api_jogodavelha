@@ -33,7 +33,7 @@ public final class SessoesJogoService {
     }
 
     public static String novoJogo(String xPlayer) {
-        String strGerada = null;
+        String strGerada;
         // O hashMap usa o .equals do String,
         // ao invés de comparar ponteiros, então funciona
         do {
@@ -50,36 +50,36 @@ public final class SessoesJogoService {
     }
 
     // inexiste o jogo depois de 5 minutos
-    public static String inexistirJogo(String cod) {
+    public static ResponseEntity<String> inexistirJogo(String cod) {
         try {
             obterSessao(cod);
         } catch (SessaoJogoException e) {
-            return "erro: " + e.getMessage();
+            return erro(e.getMessage());
         }
         temporizador.schedule(() -> {
             sessoesJogo.remove(cod);
         }, 5, TimeUnit.MINUTES);
-        return "A sessão do jogo será excluída em 5 minutos!";
+        return new ResponseEntity<>("Sucesso! O jogo acabou, logo, a sessão do jogo será excluída em 5 minutos", HttpStatus.ACCEPTED);
     }
 
-    public static String setarNomeBolinha(String cod, String oPlayer) {
+    public static ResponseEntity<String> setarNomeBolinha(String cod, String oPlayer) {
         SessaoJogo sessao;
         try {
             sessao = obterSessao(cod);
         } catch (SessaoJogoException e) {
-            return "erro: " + e.getMessage();
+            return erro(e.getMessage());
         }
-        if (sessao.isOPlayerDefinido()) return "Nome já deinido!";
+        if (sessao.isOPlayerDefinido()) return erro("nome já definido!");
         sessao.setOPlayer(oPlayer);
-        return "sucesso!";
+        return new ResponseEntity<>("sucesso!", HttpStatus.ACCEPTED);
     }
 
     private static SessaoJogo.SIMBOLO[][] obterTabela(String cod) {
         return sessoesJogo.get(cod).getTabela();
     }
 
-    private static SessaoJogo.SIMBOLO[] obterTabelaFormatada(String cod) throws SessaoJogoException {
-        SessaoJogo.SIMBOLO[][] tabela = obterSessao(cod).getTabela();
+    private static SessaoJogo.SIMBOLO[] obterTabelaFormatada(SessaoJogo sessao) throws SessaoJogoException {
+        SessaoJogo.SIMBOLO[][] tabela = sessao.getTabela();
         SessaoJogo.SIMBOLO[] tabelaArr = new SessaoJogo.SIMBOLO[9];
         int arrIndex = 0;
         for (SessaoJogo.SIMBOLO[] simbolos : tabela) {
@@ -90,22 +90,15 @@ public final class SessoesJogoService {
         return tabelaArr;
     }
 
-//    private static boolean[][] combinacoesVitoria = {
-//            {true, true, true, true, true, true, true, true, true},
-//    }
-//        {
-//    }
-//    private static String checarPorVitoria() {
-//
-//    }
-
-    public static String obterJsonEstadoJogo(String cod) {
+    public static ResponseEntity<String> obterJsonEstadoJogo(String cod) {
         StringBuilder sb = new StringBuilder("{ \"tabela\": [ ");
-        SessaoJogo.SIMBOLO[] tabelaFormatada = null;
+        SessaoJogo.SIMBOLO[] tabelaFormatada;
+        SessaoJogo sessao;
         try {
-            tabelaFormatada = obterTabelaFormatada(cod);
+            sessao = obterSessao(cod);
+            tabelaFormatada = obterTabelaFormatada(sessao);
         } catch (SessaoJogoException e) {
-            return "erro: " + e.getMessage();
+            return erro(e.getMessage());
         }
 
         for (SessaoJogo.SIMBOLO simbolo: tabelaFormatada) {
@@ -115,20 +108,40 @@ public final class SessoesJogoService {
             sb.append(", ");
         }
         sb.deleteCharAt(sb.lastIndexOf(","));
-        sb.append("] }");
-        return sb.toString();
+
+        sb.append("], \"vez\": \"");
+        sb.append(sessao.getVezDeQuem());
+        sb.append("\", ");
+
+        sb.append("\"ganhador\": ");
+        SessaoJogo.SIMBOLO ganhador = sessao.getGanhador();
+        if (ganhador != null) {
+            if (ganhador.equals(SessaoJogo.SIMBOLO.NULO)) {
+                sb.append("\"EMPATE\"");
+            } else {
+                sb.append("\"");
+                sb.append(ganhador);
+                sb.append("\"");
+            }
+        } else {
+            sb.append("\"NULO\"");
+        }
+        sb.append(" }");
+
+        return new ResponseEntity<>(sb.toString(), HttpStatus.OK);
     }
 
-    public static String obterNome(String cod, SessaoJogo.SIMBOLO simbolo) {
+    public static ResponseEntity<String> obterNome(String cod, SessaoJogo.SIMBOLO simbolo) {
         SessaoJogo sessao;
         try {
             sessao = obterSessao(cod);
         } catch (SessaoJogoException e) {
-            return e.getMessage();
+            return erro(e.getMessage());
         }
-        if (simbolo == SessaoJogo.SIMBOLO.X) return sessao.getXPlayer();
-        if (simbolo == SessaoJogo.SIMBOLO.O) return sessao.getOPlayer();
-        return "O simbolo informado deve ser O ou X, mas \"" + simbolo.toString() + "\" for informado no lugar";
+        if (simbolo == null || simbolo == SessaoJogo.SIMBOLO.NULO) return erro(
+                "O simbolo informado deve ser O ou X, mas \"" + simbolo + "\" for informado no lugar"
+        );
+        return new ResponseEntity<>("{ \"nome\": \"" + (simbolo == SessaoJogo.SIMBOLO.X ? sessao.getXPlayer() : sessao.getOPlayer()) + "\" }", HttpStatus.OK);
     }
 
     public static ResponseEntity<String> jogar(String cod, String simbolo, int posicao) {
@@ -138,11 +151,18 @@ public final class SessoesJogoService {
             case "O": simboloManeiro = SessaoJogo.SIMBOLO.O; break;
             default: return erro("simbolo inválido!");
         }
+
+
+        SessaoJogo sessaoJogo;
         try {
-            obterSessao(cod).jogar(simboloManeiro, posicao);
+            sessaoJogo = obterSessao(cod);
+            sessaoJogo.jogar(simboloManeiro, posicao);
         } catch (SessaoJogoException e) {
             return erro(e.getMessage());
         }
-        return new ResponseEntity<>("sucesso!", HttpStatus.OK);
+
+        if (sessaoJogo.getGanhador() != null) return inexistirJogo(cod);
+
+        return new ResponseEntity<>("sucesso!", HttpStatus.ACCEPTED);
     }
 }

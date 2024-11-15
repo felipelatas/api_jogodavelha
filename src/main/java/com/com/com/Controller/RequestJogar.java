@@ -1,7 +1,12 @@
 package com.com.com.Controller;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class RequestJogar {
+    @Getter @Setter
     private String simbolo;
+    @Getter @Setter
     private int posicao;
 
     public RequestJogar() {
@@ -9,22 +14,6 @@ public class RequestJogar {
 
     public RequestJogar(String simbolo, int posicao) {
         this.simbolo = simbolo;
-        this.posicao = posicao;
-    }
-
-    public String getSimbolo() {
-        return simbolo;
-    }
-
-    public void setSimbolo(String simbolo) {
-        this.simbolo = simbolo;
-    }
-
-    public int getPosicao() {
-        return posicao;
-    }
-
-    public void setPosicao(int posicao) {
         this.posicao = posicao;
     }
 }

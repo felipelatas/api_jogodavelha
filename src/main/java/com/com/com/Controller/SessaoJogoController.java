@@ -12,7 +12,6 @@ import java.util.Map;
 @RestController
 public class SessaoJogoController {
 
-
     private ResponseEntity<String> erroCod(String cod) {
         return SessoesJogoService.erro(("o tamanho do codigo é sempre "
                 + SessoesJogoService.tamanhoCod
@@ -31,7 +30,7 @@ public class SessaoJogoController {
     @PostMapping("/criar")
     public ResponseEntity<String> criar(@RequestBody(required = false) Map<String, Object> coisas) {
         String nome;
-        if (coisas.get("nome") == null) nome = "Ser X Misterioso";
+        if (coisas == null || coisas.get("nome") == null) nome = "Ser X Misterioso";
         else nome = coisas.get("nome").toString();
 
         return new ResponseEntity<>("{ \"cod\": \""
@@ -72,17 +71,14 @@ public class SessaoJogoController {
         return new ResponseEntity<>(SessoesJogoService.obterNome(cod, simboloManeiro), HttpStatus.OK);
     }
 
-    @PostMapping("/jogar/{cod}")
-    public ResponseEntity<String> jogar(@PathVariable String cod, @RequestBody(required = false) String simbolo, @RequestBody(required = false) int posicao) {
-        if (cod.length() != SessoesJogoService.tamanhoCod) return erroCod(cod);
-        if (simbolo == null)
-            return SessoesJogoService.erro("argumentos inválidos! você precisa informar \"simbolo\" e \"posicao\"");
 
-        if (!(simbolo.equals("X") || simbolo.equals("O")))
+    @PostMapping("/jogar/{cod}")
+    public ResponseEntity<String> jogar(@PathVariable String cod, @RequestBody(required = true) RequestJogar req) {
+        if (cod.length() != SessoesJogoService.tamanhoCod) return erroCod(cod);
+        if (!(req.getSimbolo().equals("X") || req.getSimbolo().equals("O")))
             return SessoesJogoService.erro("o símbolo precisa ser \"O\" ou \"X\"");
 
-        return new ResponseEntity<>(SessoesJogoService.jogar(cod,
-        simbolo, posicao), HttpStatus.OK);
+        return SessoesJogoService.jogar(cod, req.getSimbolo(), req.getPosicao());
     }
 
     @RequestMapping("/**")
@@ -98,6 +94,8 @@ public class SessaoJogoController {
     public String errorHandler(Exception e) {
         return "erro: poxa vida meus perdões viu, "
                 + "alguma coisa deu errado aqui dentro "
-                + "do meu pobrezinho servidor :(";
+                + "do meu pobrezinho servidor :(\n"
+                + "O erro em questão é esse aqui caso lhe for útil meu broto:\n"
+                + e.getMessage();
     }
 }

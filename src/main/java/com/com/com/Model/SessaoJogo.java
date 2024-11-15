@@ -27,7 +27,7 @@ public class SessaoJogo {
     }
 
     public void jogar(SIMBOLO simbolo, int posicao) throws SessaoJogoException {
-        if (posicao < 9) throw new SessaoJogoException("posição inválida!");
+        if (posicao >= 9) throw new SessaoJogoException("posição inválida!");
         if (simbolo != SIMBOLO.X && simbolo != SIMBOLO.O) {
             throw new SessaoJogoException("símbolo inválido!");
         }

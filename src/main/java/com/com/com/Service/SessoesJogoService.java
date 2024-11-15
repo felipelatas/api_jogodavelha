@@ -131,18 +131,18 @@ public final class SessoesJogoService {
         return "O simbolo informado deve ser O ou X, mas \"" + simbolo.toString() + "\" for informado no lugar";
     }
 
-    public static String jogar(String cod, String simbolo, int posicao) {
+    public static ResponseEntity<String> jogar(String cod, String simbolo, int posicao) {
         SessaoJogo.SIMBOLO simboloManeiro;
         switch (simbolo) {
             case "X": simboloManeiro = SessaoJogo.SIMBOLO.X; break;
             case "O": simboloManeiro = SessaoJogo.SIMBOLO.O; break;
-            default: return "erro: simbolo inválido!";
+            default: return erro("simbolo inválido!");
         }
         try {
             obterSessao(cod).jogar(simboloManeiro, posicao);
         } catch (SessaoJogoException e) {
-            return "erro: " + e.getMessage();
+            return erro(e.getMessage());
         }
-        return "sucesso!";
+        return new ResponseEntity<>("sucesso!", HttpStatus.OK);
     }
 }
